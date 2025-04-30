@@ -3,7 +3,7 @@ kind: KafkaMirrorMaker2
 metadata:
   name: rucio-mirrormaker
 spec:
-  version: 3.5.0
+  version: 3.7.0
   replicas: 5
   connectCluster: "target-cluster"
   clusters:
