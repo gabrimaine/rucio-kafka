@@ -1,10 +1,45 @@
 apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: controller
+  labels:
+    strimzi.io/cluster: rucio-frdf
+spec:
+  replicas: 5
+  roles:
+    - controller
+  storage:
+    type: persistent-claim
+    size: 50Gi
+    deleteClaim: false
+    class: controller-local-storage
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: broker
+  labels:
+    strimzi.io/cluster: rucio-frdf
+spec:
+  replicas: 5
+  roles:
+    - broker
+  storage:
+    type: persistent-claim
+    size: 50Gi
+    deleteClaim: false
+    class: broker-local-storage
+---
+apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
   name: rucio-frdf
+  annotations:
+    strimzi.io/kraft: enabled # updated from "migration" to "enabled" to finalize the migration process
+    strimzi.io/node-pools: enabled
 spec:
   kafka:
-    version: 3.7.0
+    version: 3.9.0
     replicas: 5
     listeners:
       - name: plain
@@ -25,32 +60,6 @@ spec:
       transaction.state.log.min.isr: 2
       default.replication.factor: 5
       min.insync.replicas: 2
-      inter.broker.protocol.version: "3.7"
-    storage:
-      type: persistent-claim
-      size: 50Gi
-      deleteClaim: false
-      class: zookeper-local-storage
-    readinessProbe: # (15)
-      initialDelaySeconds: 45
-      timeoutSeconds: 15
-    # Liveness probe (optional)
-    livenessProbe:
-      initialDelaySeconds: 45
-      timeoutSeconds: 15
-  zookeeper:
-    replicas: 5
-    jvmOptions:
-      javaSystemProperties:
-        - name: zookeeper.ssl.hostnameVerification
-          value: "false"
-        - name: zookeeper.ssl.quorum.hostnameVerification
-          value: "false"
-    storage:
-      type: persistent-claim
-      size: 50Gi
-      deleteClaim: false
-      class: zookeper-local-storage
     readinessProbe: # (15)
       initialDelaySeconds: 45
       timeoutSeconds: 15
