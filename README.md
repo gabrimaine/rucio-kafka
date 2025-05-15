@@ -1,20 +1,47 @@
+
+
+
 # Install Kafka with Strimzi
 
 In this project  there is the config used to deploy Kafka+MM2 on CC-IN2P3 K8S cluster. 
 It share resources with the RSP (same nodes). 
 
-The USDF cluster to monitoring is not ready, so MM2 is set to mirror a CC-IN2P3 kafka cluster (used to monitoring dCache activity) and in particular the `billingLSST` topic. 
-
 The following steps are needed to deploy it: 
-1. install strimzi operator
+1. deploy strimzi operator
 2. create resources (storageclass, pv,pvc) and deploy it
 3. deploy Kafka
 4. deploy MM2
 
 All these steps are quickly described in the next sections. 
 
+| Component | Version | Deployement |
+| --------------- | --------------- | --------------- |
+| Strimzi | 0.45.0 | Mamaged by Phalanx |
+| Kafka | 3.9.0 | use KRaft |
+| MirrorMaker2 | 3.9.0 | | 
 
-## Install Strimzi Operator via Helm
+
+## Install Strimzi Operator 
+
+Strimzi is now operated by the RSP directly with the following configuration: 
+
+```
+strimzi-kafka-operator:
+  resources:
+    limits:
+      memory: "1Gi"
+    requests:
+      memory: "512Mi"
+  watchNamespaces:
+    - "rucio"
+  logLevel: "DEBUG"
+
+```
+
+So it is monitoring `rucio` namespace where Kafka will be installed and it will manage kafka resources. 
+
+Strimzi operator can be installed also via Helm directly as explained in the next section
+### Install Strimzi operator via Helm
 
 Install strimzi operator as following:
 
@@ -44,7 +71,7 @@ Creates Rucio Kafka Resources
 
 options:
   -h, --help            show this help message and exit
-  --svc SVC             The service (Kafka, Zookeeper, ...) for who storageclass,pv,pvc config must be
+  --svc SVC             The service (broker, controller, ...) for who storageclass,pv,pvc config must be
                         generated
   --config CONFIG       Path to the server config
   --clustername CLUSTERNAME
@@ -65,12 +92,11 @@ cd create_pvpvc && ./create_resources.py && kubectl apply -n rucio -f out/
 
 ## Deploy Kafka
 
-To deploy Kafka (and Zookeeper), we deploy the customization available in `kafka` directory: 
+To deploy Kafka, we deploy the customization available in `kafka` directory: 
 
 ```
 kubectl apply -k kafka/
 ```
-
 
 ## Deploy MM2
 
